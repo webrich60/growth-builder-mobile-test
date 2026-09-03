@@ -45,7 +45,7 @@
       overflow: hidden !important;
     }
   
-    /* v0.56 NEKKO-style dashboard/navigation */
+    /* v0.57 NEKKO-style dashboard/navigation */
     .gb-sidebar{
       width:228px;
       flex:0 0 228px;
@@ -260,7 +260,7 @@
 
     }
 
-    /* v0.56 smartphone admin optimization */
+    /* v0.57 smartphone admin optimization */
     .gb-mobile-admin-header,
     .gb-mobile-bottom-nav,
     .gb-mobile-more-backdrop{display:none}
@@ -638,7 +638,7 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-black text-sm md:text-base leading-tight tracking-wide">WEBRICH 店舗集客ページビルダー</h1>
-          <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full shadow-sm">管理コンソール</span><span class="text-[10px] bg-slate-700 text-white font-black px-2 py-0.5 rounded-full">v0.56</span>
+          <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full shadow-sm">管理コンソール</span><span class="text-[10px] bg-slate-700 text-white font-black px-2 py-0.5 rounded-full">v0.57</span>
         </div>
         <p class="text-[11px] text-slate-300 font-bold hidden sm:block">テンプレート作成・並び替え・QR/POP・SNS導線解析・スプシ同期</p>
       </div>
@@ -2170,13 +2170,22 @@
 
       const ensureBusinessConfig = () => {
         if (!Array.isArray(config.value.businesses) || !config.value.businesses.length) {
-          config.value.businesses = [{ id: 'store-1', name: config.value.storeName || '店舗名未設定' }];
+          config.value.businesses = [{ id: 'store-1', name: config.value.storeName || 'KOTKA' }];
         }
-        if (config.value.businesses.length > 5) config.value.businesses = config.value.businesses.slice(0, 5);
+        if (config.value.businesses.length > 5) {
+          config.value.businesses = config.value.businesses.slice(0, 5);
+        }
         const hasActive = config.value.businesses.some(b => b.id === config.value.activeBusinessId);
-        if (!hasActive) config.value.activeBusinessId = config.value.businesses[0].id;
+        if (!hasActive) {
+          config.value.activeBusinessId = config.value.businesses[0].id;
+        }
+
+        // 入力中の店舗名を勝手に上書きしない。
+        // 初期値が空の時だけ、選択店舗名を表示名へ入れる。
         const active = config.value.businesses.find(b => b.id === config.value.activeBusinessId) || config.value.businesses[0];
-        if (active && active.name && config.value.storeName !== active.name) config.value.storeName = active.name;
+        if (!String(config.value.storeName || '').trim() && active) {
+          config.value.storeName = active.name || 'KOTKA';
+        }
       };
 
       const activeBusiness = computed(() => {
@@ -2198,15 +2207,24 @@
         ensureBusinessConfig();
         const biz = config.value.businesses.find(b => b.id === id);
         if (!biz) return;
+
+        // 入力値をそのまま保持。1文字ごとに旧店舗名へ戻さない。
         biz.name = name;
-        if (config.value.activeBusinessId === id) config.value.storeName = name;
+        if (config.value.activeBusinessId === id) {
+          config.value.storeName = name;
+        }
       };
 
       const updateActiveBusinessName = (name) => {
-        config.value.storeName = name;
         ensureBusinessConfig();
         const biz = config.value.businesses.find(b => b.id === config.value.activeBusinessId);
-        if (biz) biz.name = name;
+
+        // 店舗名入力欄と選択店舗名を同時更新。
+        // ensureBusinessConfig は入力値を上書きしない。
+        config.value.storeName = name;
+        if (biz) {
+          biz.name = name;
+        }
       };
 
       const addBusiness = () => {
@@ -2273,7 +2291,7 @@
           }
           ensureBusinessConfig();
 
-          // v0.56: 旧デモ店舗名「翠葉館」を実店舗 KOTKA へ移行
+          // v0.57: 旧デモ店舗名「翠葉館」を実店舗 KOTKA へ移行
           const oldDemoNames = ['翠葉館（すいようかん）', '翠葉館'];
           if (oldDemoNames.includes(config.value.storeName)) {
             config.value.storeName = 'KOTKA';
@@ -2879,9 +2897,11 @@
 
       watch(() => config.value.storeName, (val) => {
         if (isCustomerMode.value) return;
-        ensureBusinessConfig();
-        const biz = config.value.businesses.find(b => b.id === config.value.activeBusinessId);
-        if (biz && biz.name !== val) biz.name = val;
+        const list = Array.isArray(config.value.businesses) ? config.value.businesses : [];
+        const biz = list.find(b => b.id === config.value.activeBusinessId);
+        if (biz && biz.name !== val) {
+          biz.name = val;
+        }
       });
 
       watch(activeTab, () => { mobileMoreOpen.value = false; });
