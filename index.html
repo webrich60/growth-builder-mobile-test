@@ -45,7 +45,7 @@
       overflow: hidden !important;
     }
   
-    /* v0.55 NEKKO-style dashboard/navigation */
+    /* v0.56 NEKKO-style dashboard/navigation */
     .gb-sidebar{
       width:228px;
       flex:0 0 228px;
@@ -79,6 +79,7 @@
     .gb-side-store-name{font-size:17px;color:white;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
     .gb-side-store-sub{font-size:10px;color:#b4c5db;font-weight:850;margin-top:4px;line-height:1.45}
     .gb-side-quick{padding:10px;border-bottom:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03)}
+    .gb-side-quick-compact{padding-bottom:10px}
     .gb-side-store-settings{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #5c7798;background:#0d254a;color:#e6eef8;font-size:14px;font-weight:950;text-align:left;margin-bottom:10px;line-height:1.35}
     .gb-side-store-settings:hover{background:#143261}
     .gb-side-store-settings.active{background:linear-gradient(135deg,#2563eb,#3b82f6);border-color:#7cabff;color:#fff;box-shadow:0 7px 16px rgba(37,99,235,.22)}
@@ -259,7 +260,7 @@
 
     }
 
-    /* v0.55 smartphone admin optimization */
+    /* v0.56 smartphone admin optimization */
     .gb-mobile-admin-header,
     .gb-mobile-bottom-nav,
     .gb-mobile-more-backdrop{display:none}
@@ -637,7 +638,7 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-black text-sm md:text-base leading-tight tracking-wide">WEBRICH 店舗集客ページビルダー</h1>
-          <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full shadow-sm">管理コンソール</span><span class="text-[10px] bg-slate-700 text-white font-black px-2 py-0.5 rounded-full">v0.55</span>
+          <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full shadow-sm">管理コンソール</span><span class="text-[10px] bg-slate-700 text-white font-black px-2 py-0.5 rounded-full">v0.56</span>
         </div>
         <p class="text-[11px] text-slate-300 font-bold hidden sm:block">テンプレート作成・並び替え・QR/POP・SNS導線解析・スプシ同期</p>
       </div>
@@ -725,18 +726,8 @@
         </div>
       </div>
 
-      <div class="gb-side-quick">
+      <div class="gb-side-quick gb-side-quick-compact">
         <button @click="activeTab='settings'" class="gb-side-store-settings" :class="{active:activeTab==='settings'}">⚙ 事業・店舗名設定</button>
-        <button @click="activeTab='full-preview'" class="gb-side-preview">📱 お客様画面プレビュー</button>
-        <div class="gb-side-quick-actions single">
-          <button @click="addBusiness" :disabled="(config.businesses || []).length >= 5" class="gb-side-mini-btn add">＋ 店舗追加</button>
-        </div>
-        <div class="gb-side-business-list">
-          <button v-for="biz in (config.businesses || [])" :key="biz.id" @click="selectBusiness(biz.id)" class="gb-side-business-chip" :class="{active: config.activeBusinessId === biz.id}">
-            <span>{{ biz.name || '名称未入力' }}</span>
-            <small v-if="config.activeBusinessId === biz.id">使用中</small>
-          </button>
-        </div>
       </div>
 
       <nav class="gb-side-nav">
@@ -2098,9 +2089,9 @@
       const defaultConfig = {
         templateId: 'lp-japan-suiyokan',
         templateSnapshot: null,
-        businesses: [{ id: 'store-1', name: '翠葉館（すいようかん）' }],
+        businesses: [{ id: 'store-1', name: 'KOTKA' }],
         activeBusinessId: 'store-1',
-        storeName: '翠葉館（すいようかん）',
+        storeName: 'KOTKA',
         tableNumber: 'Table-01',
         subHeading: '心やすらぐ抹茶と自家製甘味のお店',
         descriptionTitle: '🎁 本日のご来店限定特典',
@@ -2126,7 +2117,7 @@
 
         actions: {
           line: { enabled: true, url: 'https://line.me', rewardText: '100円 OFFクーポン', couponCode: 'LINE100OFF' },
-          insta: { enabled: true, url: 'https://instagram.com', hashtag: '#翠葉館カフェ', rewardText: 'ミニクッキープレゼント', couponCode: 'INSTA-COOKIE' },
+          insta: { enabled: true, url: 'https://instagram.com', hashtag: '#KOTKA', rewardText: 'ミニクッキープレゼント', couponCode: 'INSTA-COOKIE' },
           google: { enabled: true, url: 'https://maps.google.com', rewardText: 'サイズアップ無料', couponCode: 'G-SIZEUP' }
         },
         termsText: '※他クーポンとの併用は不可です。\n※1回のご来店につきお一人様1回限り有効。\n※会計前にスタッフへ画面を提示してください。',
@@ -2281,6 +2272,28 @@
             if (Array.isArray(parsed.lp)) lpTemplates.value = parsed.lp;
           }
           ensureBusinessConfig();
+
+          // v0.56: 旧デモ店舗名「翠葉館」を実店舗 KOTKA へ移行
+          const oldDemoNames = ['翠葉館（すいようかん）', '翠葉館'];
+          if (oldDemoNames.includes(config.value.storeName)) {
+            config.value.storeName = 'KOTKA';
+          }
+          if (Array.isArray(config.value.businesses)) {
+            config.value.businesses.forEach((biz, idx) => {
+              if (oldDemoNames.includes(String(biz.name || '').trim())) {
+                biz.name = idx === 0 ? 'KOTKA' : biz.name;
+              }
+            });
+          }
+          const activeBiz = Array.isArray(config.value.businesses)
+            ? config.value.businesses.find(b => b.id === config.value.activeBusinessId)
+            : null;
+          if (activeBiz && oldDemoNames.includes(String(activeBiz.name || '').trim())) {
+            activeBiz.name = 'KOTKA';
+          }
+          if (activeBiz && config.value.storeName !== activeBiz.name) {
+            config.value.storeName = activeBiz.name || 'KOTKA';
+          }
         } catch (e) {
           console.warn('保存設定の読込に失敗したため初期値を使用します', e);
         }
